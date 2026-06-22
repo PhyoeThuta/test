@@ -1,0 +1,57 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend-app
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+  db:
+    image:  mysql:8.0
+    container_name: plsp_db
+    restart: unless-stopped
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=20122002
+      - MYSQL_DATABASE=plsp_db
+      - MYSQL_USER=plsp_user
+      - MYSQL_PASSWORD=plsp_password
+    volumes:
+      - plsp_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p20122002"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: pslp_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    volumes:
+      - plsp_redis_data:/data
+
+volumes:
+  plsp_db_data:
+  plsp_redis_data:
+
